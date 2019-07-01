@@ -73,7 +73,7 @@ def stations():
 @app.route("/api/v1.0/tobs")
 def tobs():
     """Return a list of temperatures for the last year"""
-    # Query all passengers
+    # Query all temperatures from last 12 month
     tobs_results = session.query(Measurement.date, Measurement.tobs).\
 filter(Measurement.date<='2017-08-23').filter(Measurement.date>='2016-08-24').order_by(Measurement.date.asc()).all()
 
@@ -83,22 +83,22 @@ filter(Measurement.date<='2017-08-23').filter(Measurement.date>='2016-08-24').or
 
 
 
-@app.route("/api/v1.0/stations")
-def stations():
-    """Return a list of stations"""
-    # Query all stations
-    results = session.query(Passenger.name, Passenger.age, Passenger.sex).all()
+# @app.route("/api/v1.0/stations")
+# def stations():
+#     """Return a list of stations"""
+#     # Query all stations
+#     results = session.query(Passenger.name, Passenger.age, Passenger.sex).all()
 
-    # Create a dictionary from the row data and append to a list of all_passengers
-    all_passengers = []
-    for name, age, sex in results:
-        passenger_dict = {}
-        passenger_dict["name"] = name
-        passenger_dict["age"] = age
-        passenger_dict["sex"] = sex
-        all_passengers.append(passenger_dict)
+#     # Create a dictionary from the row data and append to a list of all_passengers
+#     all_passengers = []
+#     for name, age, sex in results:
+#         passenger_dict = {}
+#         passenger_dict["name"] = name
+#         passenger_dict["age"] = age
+#         passenger_dict["sex"] = sex
+#         all_passengers.append(passenger_dict)
 
-    return jsonify(all_passengers)
+#     return jsonify(all_passengers)
 
 if __name__ == '__main__':
     app.run(debug=True)
