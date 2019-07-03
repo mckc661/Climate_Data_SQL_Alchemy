@@ -1,5 +1,5 @@
 import numpy as np
-
+import datetime as dt
 import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
@@ -39,12 +39,12 @@ app = Flask(__name__)
 def welcome():
     """List all available api routes."""
     return (
-        f"Available Routes:<br/>"
-        f"/api/v1.0/precipitation<br/>"
-        f"/api/v1.0/stations"
-        f"/api/v1.0/tobs<br/>"
-        f"/api/v1.0/<start><br/>"
-        f"/api/v1.0/<start>/<end><br/>"
+        f"Available Routes:<br>"
+        f"/api/v1.0/precipitation<br>"
+        f"/api/v1.0/stations<br>"
+        f"/api/v1.0/tobs<br>"
+        f"/api/v1.0/start<br>"
+        f"/api/v1.0/start/end<br>"
     )
 
 
@@ -52,12 +52,14 @@ def welcome():
 def precipitation():
     """Return a list of dates and precipitation"""
     # Query all precips
-    results = session.query(Measurement.date,Measurement.prcp).all()
+    p_results = session.query(Measurement.date,Measurement.prcp).\
+    filter(Measurement.date<='2017-08-23').filter(Measurement.date>='2016-08-24').all()
+
 
     # Convert list of tuples into normal list
-    all_dates = list(np.ravel(results))
+    year_prcp = list(np.ravel(p_results))
 
-    return jsonify(all_dates)
+    return jsonify(year_prcp)
 
 @app.route("/api/v1.0/stations")
 def stations():
@@ -82,23 +84,43 @@ filter(Measurement.date<='2017-08-23').filter(Measurement.date>='2016-08-24').or
     return jsonify(all_tobs)
 
 
+###############################
+#Start date API
 
-# @app.route("/api/v1.0/stations")
-# def stations():
-#     """Return a list of stations"""
-#     # Query all stations
-#     results = session.query(Passenger.name, Passenger.age, Passenger.sex).all()
+@app.route("/api/v1.0/<start>")
+def start(start):
+    """Return a list of average, min and max temps for year after start date"""
+    # Return avg, max, min from start date
+    start_date= dt.datetime.strptime(start, '%Y-%m-%d')
+    last_yr = dt.datetime(days=365)
+    start = start_date - last_yr
+    end = dt.date (2017,8,23)
+    trip_data= session.query(func.min(Measurement.tobs, func.avg(Measurement.tobs\
+    , func.max(Measurement.tobs))))\
+    .filter(Measurement.date>=start)\
+    .filter(Measurement.date<=end).all()
+    year_data=list(np.ravel(trip_data))
 
-#     # Create a dictionary from the row data and append to a list of all_passengers
-#     all_passengers = []
-#     for name, age, sex in results:
-#         passenger_dict = {}
-#         passenger_dict["name"] = name
-#         passenger_dict["age"] = age
-#         passenger_dict["sex"] = sex
-#         all_passengers.append(passenger_dict)
+    return jsonify (year_data)
+   
 
-#     return jsonify(all_passengers)
+####Start and End Date##################
+
+@app.route("/api/v1.0/<start>/<end>")
+def start_end(start,end):
+    """Return a list of average, min and max temps for year after start date"""
+    # Return avg, max, min from start date
+    start_date= dt.datetime.strptime(start, '%Y-%m-%d')
+    end_date= dt.datetime.strptime(start, '%Y-%m-%d')
+    start = start_date - end_date
+    end=end_date
+    new_trip_data= session.query(func.min(Measurement.tobs, func.avg(Measurement.tobs\
+    , func.max(Measurement.tobs))))\
+    .filter(Measurement.date>=start)\
+    .filter(Measurement.date<=end).all()
+    start_end_data=list(np.ravel(new_trip_data))
+
+    return jsonify (start_end_data)
 
 if __name__ == '__main__':
     app.run(debug=True)
